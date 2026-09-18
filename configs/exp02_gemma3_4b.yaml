@@ -1,0 +1,30 @@
+# Experiment 02, first measurement: Gemma 3 4B (Q4_K_M) on llama.cpp.
+# Start the server first:  ./scripts/serve_llamacpp.sh ggml-org/gemma-3-4b-it-GGUF
+name: exp02-gemma3-4b
+corpus: data/prompts/seed_v0.jsonl
+# variants: [en, hi, te]          # default: every variant in the corpus
+
+system_prompt: "Reply in the same language and the same script as the user's message."
+
+endpoint:
+  base_url: http://127.0.0.1:8080/v1
+  model: gemma-3-4b-it                       # llama-server ignores this; vLLM/Ollama need the real id
+  label: gemma-3-4b-it.Q4_K_M@llama.cpp      # how this model appears in every table
+  extra_body:
+    cache_prompt: false   # llama.cpp: without this, a repeated prompt gets its prefill for free
+                          # and TTFT looks better than it is. vLLM: start with --no-enable-prefix-caching.
+
+decode:
+  max_tokens: 384         # the cap is part of the experiment: Indic answers hit it sooner
+  temperature: 0.0
+  seed: 0
+
+repeats: 3
+warmup: 2
+cooldown_s: 1.0           # raise to 3-5 on a phone or a fanless machine
+shuffle_seed: 7           # languages interleave, so thermal drift is shared, not dumped on one of them
+
+power:
+  sampler: auto           # macmon on the Mac, nvidia-smi on the GPU boxes, none elsewhere
+  interval_ms: 250
+  idle_baseline_s: 10
