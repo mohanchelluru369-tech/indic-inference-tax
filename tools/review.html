@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Corpus review</title>
+<style>
+  :root {
+    --bg: #fbfaf8; --panel: #fff; --ink: #1a1a1a; --muted: #6b6b6b; --line: #e3e0da;
+    --accent: #7a4b1e; --ok: #2f6b3a; --warn: #9a5b00; --bad: #a32b2b;
+    --ref-bg: #f2efe9; --edited: #fff8e6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #171614; --panel: #201e1b; --ink: #ece9e4; --muted: #9b968e; --line: #34312c;
+      --accent: #d7a06a; --ok: #7fc08c; --warn: #e0a952; --bad: #e08585;
+      --ref-bg: #26231f; --edited: #2e2921;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #171614; --panel: #201e1b; --ink: #ece9e4; --muted: #9b968e; --line: #34312c;
+    --accent: #d7a06a; --ok: #7fc08c; --warn: #e0a952; --bad: #e08585;
+    --ref-bg: #26231f; --edited: #2e2921;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.55 ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 16px 96px; }
+
+  header {
+    position: sticky; top: 0; z-index: 10; background: var(--bg);
+    border-bottom: 1px solid var(--line); padding: 14px 0 12px; margin-bottom: 20px;
+  }
+  .bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  h1 { font-size: 17px; margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+  .grow { flex: 1 1 auto; }
+  button, label.btn {
+    font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 7px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+    cursor: pointer; white-space: nowrap;
+  }
+  button:hover:not(:disabled), label.btn:hover { border-color: var(--accent); }
+  button:disabled { opacity: .4; cursor: default; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) button.primary { color: #171614; } }
+  :root[data-theme="dark"] button.primary { color: #171614; }
+  input[type=file] { display: none; }
+
+  .progress { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; margin-top: 10px; }
+  .progress > i { display: block; height: 100%; background: var(--ok); width: 0; transition: width .2s; }
+  .counts { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+
+  .empty { text-align: center; padding: 72px 16px; color: var(--muted); }
+  .empty p { max-width: 52ch; margin: 10px auto; }
+
+  .item { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  .item-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin-bottom: 4px; }
+  .id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: var(--accent); font-weight: 600; }
+  .tag { font-size: 11.5px; color: var(--muted); border: 1px solid var(--line); border-radius: 20px; padding: 1px 8px; }
+  .tag.ok { color: var(--ok); border-color: var(--ok); }
+
+  .ref { background: var(--ref-bg); border-radius: 9px; padding: 12px 14px; margin: 14px 0 18px; }
+  .ref .lab { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .ref .txt { white-space: pre-wrap; font-size: 15px; }
+
+  .field { margin-bottom: 16px; }
+  .field .lab { display: flex; gap: 8px; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap; }
+  .field .name { font-size: 12.5px; font-weight: 650; }
+  .field .hint { font-size: 12px; color: var(--muted); }
+  .field .flag { font-size: 12px; margin-left: auto; }
+  .flag.ok { color: var(--ok); } .flag.warn { color: var(--warn); } .flag.bad { color: var(--bad); }
+  textarea {
+    width: 100%; min-height: 62px; resize: vertical; padding: 10px 12px;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink);
+    font-family: "Kohinoor Telugu", "Telugu Sangam MN", "Noto Sans Telugu",
+                 "Kohinoor Devanagari", "Devanagari Sangam MN", "Noto Sans Devanagari",
+                 ui-sans-serif, -apple-system, system-ui, sans-serif;
+    font-size: 16px; line-height: 1.7;
+  }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: var(--accent); }
+  textarea.edited { background: var(--edited); border-left: 3px solid var(--accent); }
+
+  .nav { display: flex; gap: 10px; align-items: center; margin-top: 22px; }
+  .kbd { font-size: 12px; color: var(--muted); }
+  footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .92em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="bar">
+    <h1>Corpus review</h1>
+    <label class="btn">Open JSONL<input type="file" id="file" accept=".jsonl,.json,.txt"></label>
+    <button id="onlyPending">Showing: all</button>
+    <span class="grow"></span>
+    <button id="download" disabled>Download corrected JSONL</button>
+  </div>
+  <div class="progress"><i id="bar"></i></div>
+  <div class="counts" id="counts">No file loaded.</div>
+</header>
+
+<div id="empty" class="empty">
+  <p><strong>Open <code>data/prompts/seed_v0.jsonl</code> to start.</strong></p>
+  <p>Nothing leaves this page — it runs entirely in your browser, offline, and never uploads the file.
+     Your edits are kept in this browser between reloads, but the file on disk only changes when you
+     download the corrected copy and replace it yourself.</p>
+</div>
+
+<div id="app" hidden>
+  <div class="item">
+    <div class="item-head">
+      <span class="id" id="itemId"></span>
+      <span class="tag" id="itemDomain"></span>
+      <span class="tag" id="itemKind"></span>
+      <span class="tag" id="itemStatus"></span>
+    </div>
+    <div class="ref">
+      <div class="lab">English — the reference. Every box below must say this, and nothing more.</div>
+      <div class="txt" id="refText"></div>
+    </div>
+    <div id="fields"></div>
+    <div class="nav">
+      <button id="prev">&larr; Previous</button>
+      <button id="next">Next &rarr;</button>
+      <span class="grow"></span>
+      <button id="toggleOk" class="primary">Mark reviewed &amp; next</button>
+    </div>
+    <div class="kbd" style="margin-top:10px">Ctrl/Cmd + Enter marks reviewed and moves on. Ctrl/Cmd + arrows navigate.</div>
+  </div>
+
+  <footer id="guide">
+    <p><strong>What to check.</strong> Native script: does it say the same thing as the English — nothing added,
+    nothing dropped — and would a person actually write it that way? Romanized (<code>_rom</code>): is that how
+    people really type it in Latin script? Pick the most common spelling and stay consistent within an item.
+    Code-mixed (<code>_cm</code>): is the English mixing natural — the words people genuinely switch for —
+    rather than forced?</p>
+    <p>If you improve one variant in a way that changes the meaning, change all of them, or the paired
+    comparison breaks.</p>
+  </footer>
+</div>
+</div>
+
+<script>
+"use strict";
+
+const VARIANTS = {
+  hi:     { name: "Hindi — native script",        script: "devanagari", hint: "Devanagari" },
+  te:     { name: "Telugu — native script",       script: "telugu",     hint: "Telugu script" },
+  hi_rom: { name: "Hindi — romanized",            script: "latin",      hint: "Latin script, as people type it" },
+  te_rom: { name: "Telugu — romanized",           script: "latin",      hint: "Latin script, as people type it" },
+  hi_cm:  { name: "Hindi–English — code-mixed",   script: "latin",      hint: "Latin script, natural mixing" },
+  te_cm:  { name: "Telugu–English — code-mixed",  script: "latin",      hint: "Latin script, natural mixing" },
+};
+const RANGES = {
+  latin:      [[0x41,0x5A],[0x61,0x7A],[0xC0,0x24F]],
+  devanagari: [[0x900,0x97F],[0xA8E0,0xA8FF]],
+  telugu:     [[0xC00,0xC7F]],
+};
+const STORE = "indictax-review-v1";
+
+let items = [], original = [], idx = 0, onlyPending = false, fileName = "seed_v0.jsonl";
+const changed = new Set();   // ids whose text differs from the file as opened
+
+const $ = id => document.getElementById(id);
+
+function scriptShare(text, want) {
+  let total = 0, hit = 0;
+  for (const ch of text) {
+    const cp = ch.codePointAt(0);
+    for (const [name, ranges] of Object.entries(RANGES)) {
+      if (ranges.some(([lo, hi]) => cp >= lo && cp <= hi)) {
+        total++;
+        if (name === want) hit++;
+        break;
+      }
+    }
+  }
+  return total ? hit / total : null;
+}
+
+function visible() {
+  return onlyPending ? items.filter(it => it.review !== "native-ok") : items;
+}
+
+function save() {
+  try { localStorage.setItem(STORE, JSON.stringify({ fileName, items })); } catch (e) { /* private mode */ }
+}
+
+function load(text, name) {
+  const parsed = [];
+  text.split("\n").forEach((line, n) => {
+    line = line.trim();
+    if (!line || line.startsWith("//")) return;
+    try { parsed.push(JSON.parse(line)); }
+    catch (e) { alert("Line " + (n + 1) + " is not valid JSON — stopping.\n\n" + e.message); throw e; }
+  });
+  if (!parsed.length) { alert("No items found in that file."); return; }
+  items = parsed;
+  original = JSON.parse(JSON.stringify(parsed));
+  changed.clear();
+  fileName = name || fileName;
+  idx = items.findIndex(it => it.review !== "native-ok");
+  if (idx < 0) idx = 0;
+  $("empty").hidden = true;
+  $("app").hidden = false;
+  $("download").disabled = false;
+  save();
+  render();
+}
+
+function render() {
+  const list = visible();
+  if (!list.length) {
+    $("fields").innerHTML = "<p style='color:var(--muted)'>Every item is marked reviewed. "
+      + "Download the corrected file and replace <code>data/prompts/seed_v0.jsonl</code>.</p>";
+    $("itemId").textContent = ""; $("refText").textContent = "";
+    ["itemDomain","itemKind","itemStatus"].forEach(i => $(i).textContent = "");
+    counts(); return;
+  }
+  if (idx >= list.length) idx = list.length - 1;
+  if (idx < 0) idx = 0;
+  const it = list[idx];
+
+  $("itemId").textContent = it.id;
+  $("itemDomain").textContent = it.domain || "—";
+  $("itemKind").textContent = it.kind || "short";
+  const done = it.review === "native-ok";
+  $("itemStatus").textContent = done ? "reviewed" : "pending";
+  $("itemStatus").className = "tag" + (done ? " ok" : "");
+  $("toggleOk").textContent = done ? "Unmark reviewed" : "Mark reviewed & next";
+  $("refText").textContent = it.variants.en ?? "(no English variant)";
+
+  const host = $("fields");
+  host.innerHTML = "";
+  const base = original.find(o => o.id === it.id);
+  for (const [key, meta] of Object.entries(VARIANTS)) {
+    if (!(key in it.variants)) continue;
+    const wrap = document.createElement("div");
+    wrap.className = "field";
+    const lab = document.createElement("div");
+    lab.className = "lab";
+    lab.innerHTML = '<span class="name"></span><span class="hint"></span><span class="flag"></span>';
+    lab.querySelector(".name").textContent = meta.name;
+    lab.querySelector(".hint").textContent = meta.hint;
+    const flag = lab.querySelector(".flag");
+
+    const ta = document.createElement("textarea");
+    ta.value = it.variants[key];
+    ta.spellcheck = false;
+    ta.setAttribute("aria-label", meta.name);
+
+    const check = () => {
+      const share = scriptShare(ta.value, meta.script);
+      if (!ta.value.trim()) { flag.textContent = "empty"; flag.className = "flag bad"; }
+      else if (share === null) { flag.textContent = "no letters"; flag.className = "flag warn"; }
+      else if (share >= 0.85) { flag.textContent = "script ok"; flag.className = "flag ok"; }
+      else if (share < 0.15) {
+        flag.textContent = "wrong script — expected " + meta.hint.split(",")[0];
+        flag.className = "flag bad";
+      } else {
+        flag.textContent = Math.round(share * 100) + "% " + meta.hint.split(",")[0] + " — mixed scripts";
+        flag.className = "flag " + (share >= 0.5 ? "warn" : "bad");
+      }
+      const differs = base && Object.keys(it.variants).some(k => it.variants[k] !== base.variants[k]);
+      if (differs) changed.add(it.id); else changed.delete(it.id);
+      ta.classList.toggle("edited", base && ta.value !== base.variants[key]);
+    };
+    ta.addEventListener("input", () => { it.variants[key] = ta.value; check(); counts(); save(); });
+    check();
+
+    wrap.append(lab, ta);
+    host.append(wrap);
+  }
+  counts();
+}
+
+function counts() {
+  const done = items.filter(i => i.review === "native-ok").length;
+  const list = visible();
+  const pos = list.length ? " · item " + (idx + 1) + " of " + list.length : "";
+  $("counts").textContent = done + " of " + items.length + " marked reviewed · "
+    + changed.size + " edited" + pos;
+  $("bar").style.width = (items.length ? (done / items.length) * 100 : 0) + "%";
+  $("prev").disabled = idx <= 0;
+  $("next").disabled = idx >= list.length - 1;
+}
+
+function step(d) { idx += d; render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+
+function toggleOk() {
+  const list = visible();
+  if (!list.length) return;
+  const it = list[idx];
+  if (it.review === "native-ok") { it.review = "pending"; save(); render(); return; }
+  it.review = "native-ok";
+  save();
+  if (onlyPending) render(); else step(1);
+}
+
+$("file").addEventListener("change", e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => load(r.result, f.name);
+  r.readAsText(f);
+});
+$("prev").addEventListener("click", () => step(-1));
+$("next").addEventListener("click", () => step(1));
+$("toggleOk").addEventListener("click", toggleOk);
+$("onlyPending").addEventListener("click", () => {
+  onlyPending = !onlyPending;
+  $("onlyPending").textContent = "Showing: " + (onlyPending ? "pending only" : "all");
+  idx = 0; render();
+});
+$("download").addEventListener("click", () => {
+  const body = items.map(i => JSON.stringify(i)).join("\n") + "\n";
+  const url = URL.createObjectURL(new Blob([body], { type: "application/x-ndjson" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+document.addEventListener("keydown", e => {
+  if (!(e.metaKey || e.ctrlKey)) return;
+  if (e.key === "Enter") { e.preventDefault(); toggleOk(); }
+  else if (e.key === "ArrowRight") { e.preventDefault(); step(1); }
+  else if (e.key === "ArrowLeft") { e.preventDefault(); step(-1); }
+});
+
+try {
+  const saved = JSON.parse(localStorage.getItem(STORE) || "null");
+  if (saved && saved.items && saved.items.length) {
+    items = saved.items;
+    original = JSON.parse(JSON.stringify(saved.items));
+    fileName = saved.fileName || fileName;
+    $("empty").hidden = true; $("app").hidden = false; $("download").disabled = false;
+    idx = Math.max(0, items.findIndex(i => i.review !== "native-ok"));
+    changed.clear();
+    render();
+    $("counts").textContent += " · restored from this browser; re-open the file to start fresh";
+  }
+} catch (e) { /* no stored session */ }
+</script>
+</body>
+</html>

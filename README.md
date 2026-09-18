@@ -65,7 +65,8 @@ Then read `results/<newest>/summary.md`.
 src/indictax/      the harness (cli, fertility, client, bench, energy, report, belebele)
 configs/           tokenizers.yaml, one YAML per Exp 02 model
 data/prompts/      seed_v0.jsonl: 18 hand-written parallel prompts (needs native review, see data/README.md)
-scripts/           setup_mac.sh, serve_llamacpp.sh, first_measurement.sh
+scripts/           setup_mac.sh, serve_llamacpp.sh, first_measurement.sh, exp02_pair.sh
+tools/             review.html: offline corpus review page for native speakers
 docs/              problem statement, prior work, methodology, roadmap, hardware matrix
 paper/             outline of the write-up
 results/           one folder per run: raw.jsonl, meta.json, summary.md, *.csv
