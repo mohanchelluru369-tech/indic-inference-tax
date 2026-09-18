@@ -20,6 +20,12 @@ Week 1 starts Monday 21 September 2026. Target: arXiv submission in the week of 
 - **End of week 3:** if the phone cannot run a 1B model at usable speed, that *is* the finding for the on-device section; drop to sub-1B models and report it.
 - **End of week 7:** if tokenizer expansion does not hold accuracy, publish the measurement paper with the two cheaper mitigations and report the negative result honestly. A solid measurement paper with a partial fix beats a late paper.
 
+## Where Kneepoint comes in
+
+Not yet, and not as a merge. Kneepoint's own docs draw the line: it measures *agents* under concurrency, and says a bare model endpoint is a serving benchmark that belongs to other tools. This repo is that serving benchmark, single-stream, per language. Bolting it onto Kneepoint would blur the product's positioning while it is mid-launch, so the two stay separate and share only the discipline (paired runs, no invented numbers, JSONL outputs, integrity docs).
+
+The one place they meet is **Exp 06, concurrency by language (week 5-6, after the hardware matrix)**: does the knee point arrive earlier for Telugu than for English on the same server, because longer token sequences fill the KV cache sooner? That is exactly Kneepoint's instrument, and the first pass needs no new feature: run `kneepoint run` twice against the same llama.cpp or vLLM server, once with the `en` prompts as the corpus and once with `te`, and compare the two knees and $/resolved task. If the gap is real, the feature that earns its place in Kneepoint is small and generic: a *cohort* tag per prompt file so one run reports the knee and $/resolved task per cohort. The same result becomes a Kneepoint Index entry, "the Indic knee", which is the marketing bridge between the two projects. Energy per resolved task (this repo's sampler) is a possible Kneepoint plugin later; it is not on the path to the paper.
+
 ## Where to publish
 
 Preprint on arXiv first (cs.CL, cross-list cs.PF or cs.LG). Then a workshop with proceedings: look at the low-resource and multilingual workshops co-located with ACL/EMNLP/COLING (for example LoResLM) and efficient-NLP venues. Deadlines were not checked when this was written; look them up in week 1 and let the nearest sensible one set the pace. First-time arXiv submitters to cs.CL may need an endorsement; sort that out in week 8, not week 10.

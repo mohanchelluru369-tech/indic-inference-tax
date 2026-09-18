@@ -87,6 +87,12 @@ def test_live_subprocess_pump_with_a_fake_macmon(tmp_path, monkeypatch):
     s = make_sampler("auto", interval_ms=50)
     assert s.name == "macmon"
     s.start()
+    # Wait for the first reading before opening the window: spawning a Python
+    # subprocess takes ~0.5 s on macOS, and the window must start inside coverage.
+    deadline = time.monotonic() + 5.0
+    while not s.samples and time.monotonic() < deadline:
+        time.sleep(0.02)
+    assert s.samples, s.error
     t0 = time.monotonic()
     time.sleep(0.6)
     t1 = time.monotonic()
