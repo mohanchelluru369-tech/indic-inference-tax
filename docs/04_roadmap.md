@@ -4,19 +4,19 @@ Week 1 starts Monday 21 September 2026. Target: arXiv submission in the week of 
 
 | Week | Dates | Goal | Done when |
 |---|---|---|---|
-| 1 | 21-27 Sep | **First signal.** Run setup and first measurement on the Mac. Review and correct the seed corpus (Telugu first). Fix any wrong repo ids in `configs/tokenizers.yaml`; add current-generation models. | `results/` holds one fertility run and one clean Exp 02 run; the go/redirect decision in `01_problem_statement.md` is made and written down. |
+| 1 | 21-27 Sep | **First signal.** ~~Run setup and first measurement on the Mac.~~ **Exp 01 done 18 Sep; the redirect is recorded in `01_problem_statement.md`.** Remaining: one clean Exp 02 run on AC power, the Llama 3.2 / Gemma 3 pair back to back (the natural experiment), Telugu review of the seed corpus, current-generation tokenizers added to `configs/tokenizers.yaml`. | `results/` holds a clean Exp 02 run for both models; corpus items marked `native-ok`. |
 | 2 | 28 Sep-4 Oct | **Exp 01 at full width.** FLORES+/IN22 across all 22 scheduled languages x 10+ tokenizers. Build Belebele corpus; Exp 02 on the Mac with 3-4 models. | Tokenizer-tax table and first joules-per-correct-answer table. |
 | 3 | 5-11 Oct | **Hardware matrix.** Same GGUFs on the RTX workstation and the GCP T4. Get a budget Android phone (about ₹10-15k, 4-6 GB RAM) and run under Termux. | One results table with four hardware rows. |
-| 4 | 12-18 Oct | **Exp 03: quantization x language.** Q8, Q5, Q4, Q3, Q2 of two models; accuracy, latency and energy per language. | Accuracy-vs-bits curves per language; H5 answered. |
+| 4 | 12-18 Oct | **Exp 03: quantization x language.** Q8, Q5, Q4, Q3, Q2 of two models; accuracy, latency and energy per language. Promoted by the week 1 redirect: with the tokenizer largely solved on current models, this is where an unmeasured per-language penalty most likely still hides. | Accuracy-vs-bits curves per language; H5 answered. |
 | 5 | 19-25 Oct | **Exp 04: speculative decoding x language.** llama.cpp draft-model and n-gram lookup decoding; acceptance and speedup per variant. | H6 answered. |
-| 6-7 | 26 Oct-8 Nov | **Exp 05: the fix.** (a) Indic-calibrated importance-matrix quantization (cheap, do first). (b) Tokenizer expansion for Telugu + Hindi on one 1-4B model with light continued training (MLX or the RTX box). (c) Language-matched draft model. | Each mitigation has a before/after row measured with the same harness. |
+| 6-7 | 26 Oct-8 Nov | **Exp 05: the fix.** (a) Indic-calibrated importance-matrix quantization (cheap, do first). (b) Tokenizer expansion for Telugu + Hindi with light continued training — **on Llama 3.2 3B, not a model that is already fine**: the week 1 redirect points the fix at the byte-fallback families, where there is a 7.59x gap and a 98% fragment rate to attack. (c) Language-matched draft model. | Each mitigation has a before/after row measured with the same harness. |
 | 8 | 9-15 Nov | **Compound result and ablations.** Stack the mitigations; measure on the phone; find what did not work and say so. | The headline number: how much of the end-to-end tax was closed. |
 | 9 | 16-22 Nov | **Write.** Paper from `paper/outline.md`; clean the repo; leaderboard page. Re-run the prior-work search. | Full draft reviewed by at least one outside reader. |
 | 10 | 23-29 Nov | **Publish.** arXiv; repo public; one plain-language write-up. Send to AI4Bharat, Sarvam, Krutrim, BharatGen, People+ai with a specific ask (run it on your model). | Preprint live. |
 
 ## Checkpoints where the plan can change
 
-- **End of week 1:** if current tokenizers already put hi/te within about 1.5x of English, shift weight from the tokenizer fix to quantization, drafting and the romanization trade-off (see `01_problem_statement.md`).
+- **End of week 1: FIRED, 18 Sep.** Current tokenizers do put hi/te within ~1.5x (Gemma 3, o200k, Sarvam-1), but Llama-3-class models sit at 7.59x on Telugu. Weight shifted to quantization, drafting and the romanization trade-off; the tokenizer fix re-aimed at the byte-fallback installed base. Full reasoning in `01_problem_statement.md`.
 - **End of week 3:** if the phone cannot run a 1B model at usable speed, that *is* the finding for the on-device section; drop to sub-1B models and report it.
 - **End of week 7:** if tokenizer expansion does not hold accuracy, publish the measurement paper with the two cheaper mitigations and report the negative result honestly. A solid measurement paper with a partial fix beats a late paper.
 

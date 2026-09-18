@@ -270,15 +270,26 @@ class SamplerCheck:
     example: dict = field(default_factory=dict)
 
 
-def self_check(kind: str = "auto", seconds: float = 2.0) -> SamplerCheck:
-    """Start the sampler briefly and report whether real readings arrive."""
+def self_check(kind: str = "auto", seconds: float = 5.0) -> SamplerCheck:
+    """Start the sampler and report whether real readings arrive.
+
+    Polls rather than sleeping a fixed span, and stops as soon as the answer is
+    known either way: readings arrived, or the tool died and left an error. A
+    fixed sleep has to be long enough for the slowest machine to spawn the tool,
+    which then makes `doctor` wait that long on every healthy machine too.
+    """
     s = make_sampler(kind)
     if s.name == "none":
         return SamplerCheck("none", False, "no power tool found; runs will record timing only")
+    started = time.monotonic()
     s.start()
-    time.sleep(seconds)
+    while time.monotonic() - started < seconds:
+        if len(s.samples) >= 2 or s.error:
+            break
+        time.sleep(0.05)
+    elapsed = time.monotonic() - started
     s.stop()
     if s.samples:
-        return SamplerCheck(s.name, True, f"{len(s.samples)} readings in {seconds:.0f}s",
+        return SamplerCheck(s.name, True, f"{len(s.samples)} readings in {elapsed:.1f}s",
                             len(s.samples), s.samples[-1].channels)
-    return SamplerCheck(s.name, False, s.error or "started but produced no readings")
+    return SamplerCheck(s.name, False, s.error or f"started but produced no readings in {elapsed:.1f}s")

@@ -102,7 +102,12 @@ def test_live_subprocess_pump_with_a_fake_macmon(tmp_path, monkeypatch):
 
     # self_check uses the default 250 ms interval, which the stand-in rejects and
     # exits on: the failure must surface with the tool's own message, not silently.
-    chk = self_check("macmon", seconds=0.5)
+    # The budget is generous because a loaded CI runner can take a second just to
+    # spawn Python; self_check returns as soon as the failure is visible, so the
+    # generous budget costs nothing when things work.
+    t0 = time.monotonic()
+    chk = self_check("macmon", seconds=20.0)
+    assert time.monotonic() - t0 < 15.0, "self_check waited out the budget instead of returning early"
     assert chk.ok is False
     assert "exited with code 1" in chk.detail and "AssertionError" in chk.detail
 
@@ -119,3 +124,26 @@ def test_a_dead_or_stalled_sampler_yields_none_not_invented_joules():
     assert integrate(holed, np.full_like(holed, 20.0), 4.0, 36.0) is None
     # a request shorter than the sampling interval is still fine if readings surround it
     assert integrate(t, w, 3.30, 3.40) == pytest.approx(2.0)
+
+
+def test_self_check_returns_as_soon_as_readings_arrive(monkeypatch):
+    """A healthy sampler must not cost `doctor` the whole budget."""
+    import time
+
+    from indictax.energy import self_check
+
+    class Fast(PowerSampler):
+        name = "fake"
+        primary = "soc_w"
+
+        def start(self):
+            self.samples = [Sample(time.monotonic(), {"soc_w": 3.0}) for _ in range(4)]
+
+        def stop(self):
+            pass
+
+    monkeypatch.setitem(__import__("indictax.energy", fromlist=["SAMPLERS"]).SAMPLERS, "fake", Fast)
+    t0 = time.monotonic()
+    chk = self_check("fake", seconds=30.0)
+    assert time.monotonic() - t0 < 1.0
+    assert chk.ok and chk.readings == 4 and chk.example == {"soc_w": 3.0}

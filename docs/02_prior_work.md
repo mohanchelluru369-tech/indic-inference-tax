@@ -14,6 +14,12 @@ Surveyed on 17 September 2026. This area moves fast (five of these papers are fr
 | [Urja Labs: on-device LLMs on mid-range Android](https://urjalabs.in/blog/on-device-llm-benchmarks-mid-range-android/) | tok/s, TTFT, memory for small models on a Snapdragon 7 Gen 1 phone. | CPU only, plugged in, no energy, no thermal soak, Indian languages not benchmarked. |
 | [Sarvam Edge coverage](https://ucstrategies.com/news/indias-best-offline-ai-only-works-on-phones-80-of-indians-cant-afford/) | Reports that Sarvam's on-device model needs Snapdragon 8 Gen 3 class hardware. | "No latency numbers for a ₹12,000 phone." |
 
+## What our own first run adds to this table (18 Sep 2026)
+
+The Tokenizer Tax reports an 8.0x average across 14 Indian languages and 6 tokenizers. Our Exp 01 reproduces the phenomenon and then dissolves the average: on the same 18 prompts Telugu ranges from 7.59x (Llama 3.2, 98% byte fragments) to 1.19x (Sarvam-1, 68k vocabulary). The per-language mean hides a 6x per-model spread, and the smallest vocabulary in the set carries the smallest tax — so vocabulary size is not the lever that paper's framing implies; script coverage is. Position the paper against this explicitly rather than as a contradiction: their finding holds, its unit of analysis is wrong for anyone choosing a model.
+
+We also have no prior work at all on the romanization *cost* question (Indi-RomCoM covers accuracy only), and our number contradicts the folk assumption: romanized Indic text is dearer than native script on every tokenizer that covers the script.
+
 ## The gap, in one paragraph
 
 Each component of the tax has a paper. None of them is about Indic languages on the hardware Indians own; none covers romanized or code-mixed input on the cost side; none measures the effects together; and the only demonstrated fix needs pretraining. The contribution here is (a) the first end-to-end, paired, systems-level measurement of the Indic inference tax across consumer hardware down to a budget phone, in the forms people actually type, and (b) a measured, laptop-scale mitigation on an existing open model.
