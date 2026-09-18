@@ -6,15 +6,43 @@ Recent papers have counted the extra *tokens* Indian languages need (about 8x En
 
 ## Status
 
-Scaffold, v0.1. The harness is written and covered by a pytest suite, including end-to-end runs against a fake streaming server. **No real measurement has been taken yet.** The numbers start with `./scripts/first_measurement.sh` on your machine.
+v0.1. The harness is written and covered by a pytest suite, including end-to-end runs against a fake streaming server. **Experiment 01 has run** — results below and in [`results/20260918-095750-fertility/`](results/20260918-095750-fertility/). Experiment 02 runs end to end on an Apple M5 Pro (real power sampling, flat decode rate across languages) but has no run worth quoting yet: the first pass was a three-item smoke test on battery, which this project's own rules say to discard.
+
+## First result: the tax is a property of the tokenizer, not of the language
+
+Eighteen parallel prompts, identical content in every column, tokens counted against the English baseline. 1.00 is parity; 7.59 means the same question costs 7.59x the tokens, and therefore roughly 7.59x the prefill compute, KV-cache memory and API spend.
+
+| tokenizer | vocab | hi | te | hi_rom | te_rom | hi_cm | te_cm |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Llama-3.2-3B-Instruct | 128,256 | 2.44 | **7.59** | 1.87 | 1.68 | 1.21 | 1.09 |
+| SmolLM3-3B | 128,256 | 2.44 | **7.59** | 1.87 | 1.68 | 1.21 | 1.09 |
+| Qwen3-4B | 151,669 | 4.30 | **6.48** | 1.87 | 1.68 | 1.22 | 1.10 |
+| Krutrim-2-instruct | 131,072 | 1.75 | 2.05 | 1.82 | 1.62 | 1.19 | 1.09 |
+| Phi-4-mini-instruct | 200,029 | 1.45 | 1.75 | 1.71 | 1.57 | 1.16 | 1.05 |
+| gpt-oss-20b (o200k) | 200,019 | 1.45 | 1.75 | 1.71 | 1.57 | 1.16 | 1.05 |
+| gemma-3-4b-it | 262,145 | 1.18 | 1.58 | 1.59 | 1.57 | 1.04 | 1.06 |
+| sarvam-1 | 68,096 | **1.14** | **1.19** | 2.18 | 1.91 | 1.41 | 1.22 |
+
+Three things fall out of it.
+
+**The spread between models is larger than the spread between languages.** Telugu costs 7.59x on Llama 3.2 and 1.19x on Sarvam-1 — the same sentences, a 6x difference in bill, decided entirely by which model you picked. Reporting "the Indic tokenizer tax" as one number per language, as the literature currently does, averages over the thing that actually matters.
+
+**Vocabulary size is not the lever; script coverage is.** Sarvam-1 has the *smallest* vocabulary here (68k) and the lowest tax. Llama 3.2 has twice that and the highest. The mechanism is visible in the fragment rate: 98.2% of Llama's Telugu tokens are lone bytes or partial characters — it has no merges for the script and is spelling it out byte by byte — against 0% for Gemma 3 and 6% for Sarvam-1. Qwen3 fragments 52% of Hindi and 81% of Telugu. (Llama 3.2 and SmolLM3 agree to three digits because they ship the same vocabulary; Phi-4-mini and gpt-oss agree because both are built on o200k.)
+
+**Romanizing is not a free saving, and on a good tokenizer it is a penalty.** On Sarvam-1, typing Telugu in Latin script costs 1.91x English against 1.19x for native script — writing it the way most people actually type it makes it *more* expensive, not less. On Gemma 3 it is a wash (1.57 vs 1.58). Only on the byte-fallback tokenizers is romanizing the large win it is assumed to be (1.68 vs 7.59 on Llama). Hundreds of millions of people make this trade every day and nobody has priced it.
+
+Caveat, and it is not a small one: this is 18 prompts, written by an LLM and **not yet reviewed by native speakers** (see [data/README.md](data/README.md)). Treat the direction as real and the third digit as noise. The paper's numbers will come from FLORES+/IN22 and Belebele.
 
 ## Quick start (macOS, Apple Silicon)
 
 ```bash
 ./scripts/setup_mac.sh            # brew: uv, llama.cpp, macmon; creates .venv; runs tests + doctor
 QUICK=1 ./scripts/first_measurement.sh   # 5-minute smoke test (after a one-time ~2.5 GB model download)
-./scripts/first_measurement.sh    # the real first run
+./scripts/first_measurement.sh    # Exp 01 + Exp 02 for one model
+./scripts/exp02_pair.sh           # Exp 02 for the Llama/Gemma pair, back to back (~50 min, AC power)
 ```
+
+`exp02_pair.sh` is the natural experiment: two models that differ by 4.8x in Telugu token cost, on one machine, one engine, one quantization. It refuses to run on battery or in Low Power Mode, because the methodology says those numbers get discarded.
 
 Then read `results/<newest>/summary.md`.
 
